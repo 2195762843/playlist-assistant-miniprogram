@@ -1,0 +1,212 @@
+<!-- 歌单详情页 -->
+<view class="page">
+  <!-- 歌单信息 -->
+  <view class="playlist-info">
+    <view class="playlist-name">
+      {{playlist.name}}
+      <text wx:if="{{playlist.isPinned}}" class="pin-icon">📌</text>
+    </view>
+    <view wx:if="{{playlist.description}}" class="playlist-description">
+      {{playlist.description}}
+    </view>
+    <view class="playlist-meta">
+      <view class="meta-item">
+        <text class="meta-icon">🎵</text>
+        <text>{{playlist.songCount || 0}} 首歌曲</text>
+      </view>
+      <view class="meta-item">
+        <text class="meta-icon">📅</text>
+        <text>{{playlist.createTimeFormat}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 标签筛选区域 -->
+  <view class="tags-section">
+    <view class="tags-title">标签筛选</view>
+    <view class="tags-list">
+      <text
+        wx:for="{{allTags}}"
+        wx:key="name"
+        class="tag {{selectedTags.includes(item.name) ? 'active' : ''}}"
+        style="background-color: {{item.color || '#E8F4FD'}}; color: {{item.color ? '#ffffff' : '#4A90E2'}}"
+        bindtap="toggleTag"
+        data-tag="{{item.name}}"
+      >
+        {{item.name}}
+      </text>
+      <view class="add-tag-btn" bindtap="goToTags">+ 管理标签</view>
+    </view>
+  </view>
+
+  <!-- 操作栏 -->
+  <view class="action-bar">
+    <view class="action-count">
+      共 {{displayedSongs.length}} 首歌曲
+    </view>
+    <view class="action-buttons">
+      <view
+        class="action-btn default"
+        bindtap="goToEditPlaylist"
+      >
+        编辑歌单
+      </view>
+    </view>
+  </view>
+
+  <!-- 歌曲列表 -->
+  <view class="songs-container">
+    <block wx:if="{{displayedSongs.length > 0}}">
+      <view
+        wx:for="{{displayedSongs}}"
+        wx:key="id"
+        class="song-card"
+      >
+        <view class="song-info">
+          <view class="song-name">
+            {{item.name}}
+            <text wx:if="{{item.isFavorite}}" class="favorite-icon">❤️</text>
+          </view>
+          <view wx:if="{{item.artist}}" class="song-artist">
+            {{item.artist}}
+          </view>
+          <view wx:if="{{item.mood}}" class="song-mood">
+            {{item.mood}}
+          </view>
+          <view wx:if="{{item.tags && item.tags.length > 0}}" class="song-tags">
+            <text
+              wx:for="{{item.tags}}"
+              wx:for-item="tag"
+              wx:key="index"
+              class="song-tag"
+              style="background-color: {{getTagColor(tag)}}; color: #ffffff;"
+            >
+              {{tag}}
+            </text>
+          </view>
+        </view>
+
+        <view class="song-actions">
+          <view
+            class="song-action-btn"
+            bindtap="toggleFavorite"
+            data-id="{{item.id}}"
+          >
+            {{item.isFavorite ? '❤️' : '🤍'}}
+          </view>
+          <view
+            class="song-action-btn"
+            bindtap="editSong"
+            data-id="{{item.id}}"
+          >
+            ✏️
+          </view>
+          <view
+            class="song-action-btn"
+            bindtap="deleteSong"
+            data-id="{{item.id}}"
+            data-name="{{item.name}}"
+          >
+            🗑️
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- 空状态 -->
+    <block wx:else>
+      <view class="empty-state">
+        <text class="empty-icon">🎵</text>
+        <view class="empty-text">
+          {{selectedTags.length > 0 ? '没有符合条件的歌曲' : '还没有添加歌曲'}}
+        </view>
+        <view class="empty-hint">
+          {{selectedTags.length > 0 ? '尝试调整筛选条件' : '点击下方按钮添加第一首歌曲'}}
+        </view>
+      </view>
+    </block>
+  </view>
+
+  <!-- 底部添加按钮 -->
+  <view class="fab-button" bindtap="showAddSongModal">+</view>
+</view>
+
+<!-- 歌曲编辑弹窗 -->
+<view wx:if="{{showSongModal}}" class="modal-mask" bindtap="hideSongModal">
+  <view class="modal-content" catchtap="noop">
+    <view class="modal-header">
+      <text class="modal-title">{{editingSong ? '编辑歌曲' : '添加歌曲'}}</text>
+      <text class="modal-close" bindtap="hideSongModal">×</text>
+    </view>
+
+    <view class="modal-body">
+      <view class="input-row">
+        <text class="input-label">歌曲名称 *</text>
+        <input
+          class="input"
+          placeholder="请输入歌曲名称"
+          value="{{songForm.name}}"
+          bindinput="onSongNameInput"
+        />
+      </view>
+
+      <view class="input-row">
+        <text class="input-label">歌手</text>
+        <input
+          class="input"
+          placeholder="请输入歌手名称"
+          value="{{songForm.artist}}"
+          bindinput="onSongArtistInput"
+        />
+      </view>
+
+      <view class="input-row">
+        <text class="input-label">听歌心情备注</text>
+        <textarea
+          class="textarea"
+          placeholder="记录此刻听这首歌的心情..."
+          value="{{songForm.mood}}"
+          bindinput="onSongMoodInput"
+        />
+      </view>
+
+      <view class="input-row">
+        <text class="input-label">标签（可多选）</text>
+        <view class="tags-selector">
+          <text
+            wx:for="{{allTags}}"
+            wx:key="name"
+            class="tag-selector-item {{songForm.tags.includes(item.name) ? 'selected' : ''}}"
+            style="background-color: {{item.color || '#E8F4FD'}}; color: {{item.color ? '#ffffff' : '#4A90E2'}}"
+            bindtap="toggleSongTag"
+            data-tag="{{item.name}}"
+          >
+            {{item.name}}
+          </text>
+        </view>
+      </view>
+    </view>
+
+    <view class="modal-footer">
+      <view
+        wx:if="{{editingSong}}"
+        class="modal-btn delete"
+        bindtap="confirmDeleteSong"
+      >
+        删除
+      </view>
+      <view
+        class="modal-btn cancel"
+        bindtap="hideSongModal"
+      >
+        取消
+      </view>
+      <view
+        class="modal-btn confirm"
+        bindtap="saveSong"
+      >
+        保存
+      </view>
+    </view>
+  </view>
+</view>

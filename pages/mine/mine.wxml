@@ -1,0 +1,85 @@
+<!-- 我的页面 -->
+<view class="page">
+  <!-- 头部区域 -->
+  <view class="header">
+    <view class="avatar">🎵</view>
+    <view class="header-title">私人歌单整理助手</view>
+    <view class="header-subtitle">记录你的音乐心情</view>
+  </view>
+
+  <!-- 统计数据 -->
+  <view class="stats-container">
+    <view class="stats-grid">
+      <view class="stat-card">
+        <view class="stat-icon">📋</view>
+        <view class="stat-value">{{stats.totalPlaylists}}</view>
+        <view class="stat-label">歌单数量</view>
+      </view>
+
+      <view class="stat-card">
+        <view class="stat-icon">🎵</view>
+        <view class="stat-value">{{stats.totalSongs}}</view>
+        <view class="stat-label">歌曲总数</view>
+      </view>
+
+      <view class="stat-card">
+        <view class="stat-icon">📌</view>
+        <view class="stat-value">{{stats.pinnedPlaylists}}</view>
+        <view class="stat-label">置顶歌单</view>
+      </view>
+
+      <view class="stat-card">
+        <view class="stat-icon">❤️</view>
+        <view class="stat-value">{{stats.favoriteSongs}}</view>
+        <view class="stat-label">收藏歌曲</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 功能列表 -->
+  <view class="section">
+    <view class="section-title">功能</view>
+    <view class="function-list">
+      <view class="function-item" bindtap="goToTags">
+        <text class="function-icon">🏷️</text>
+        <view class="function-info">
+          <view class="function-name">标签管理</view>
+          <view class="function-desc">管理和自定义歌曲标签</view>
+        </view>
+        <text class="function-arrow">›</text>
+      </view>
+
+      <view class="function-item" bindtap="clearAllData">
+        <text class="function-icon">🗑️</text>
+        <view class="function-info">
+          <view class="function-name">清空数据</view>
+          <view class="function-desc">清除所有歌单和歌曲</view>
+        </view>
+        <text class="function-arrow">›</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 关于 -->
+  <view class="about-section">
+    <view class="about-card">
+      <view class="about-title">关于</view>
+      <view class="about-version">v1.0.0</view>
+      <view class="about-desc">
+        私人歌单整理助手是一款轻量级的本地歌单管理工具，帮助你记录和整理音乐心情。
+      </view>
+      <view class="about-features">
+        <view>✅ <text>本地存储</text> - 数据安全不丢失</view>
+        <view>✅ <text>标签分类</text> - 自定义歌曲标签</view>
+        <view>✅ <text>快速搜索</text> - 轻松查找歌曲</view>
+        <view>✅ <text>置顶收藏</text> - 重要歌单优先</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部版权 -->
+  <view class="footer">
+    <text>© 2024 私人歌单整理助手</text>
+    <text style="display: block; margin-top: 8rpx;">仅作为本地数据记录工具使用</text>
+  </view>
+</view>

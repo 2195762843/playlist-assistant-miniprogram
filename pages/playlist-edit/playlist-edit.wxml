@@ -1,0 +1,120 @@
+<!-- 新增/编辑歌单页 -->
+<view class="page">
+  <view class="form-container">
+    <!-- 基本信息 -->
+    <view class="form-section">
+      <view class="form-section-title">
+        <text class="section-icon">📝</text>
+        <text>基本信息</text>
+      </view>
+
+      <view class="form-item">
+        <text class="form-label required">歌单名称</text>
+        <input
+          class="form-input"
+          placeholder="请输入歌单名称"
+          value="{{formData.name}}"
+          bindinput="onNameInput"
+          maxlength="50"
+        />
+        <view class="char-count">{{formData.name.length}}/50</view>
+      </view>
+
+      <view class="form-item">
+        <text class="form-label">歌单描述</text>
+        <textarea
+          class="form-textarea"
+          placeholder="简单描述这个歌单..."
+          value="{{formData.description}}"
+          bindinput="onDescriptionInput"
+          maxlength="200"
+        />
+        <view class="char-count">{{formData.description.length}}/200</view>
+      </view>
+    </view>
+
+    <!-- 标签选择 -->
+    <view class="form-section">
+      <view class="form-section-title">
+        <text class="section-icon">🏷️</text>
+        <text>选择标签</text>
+      </view>
+
+      <view class="tags-grid">
+        <text
+          wx:for="{{presetTags}}"
+          wx:key="name"
+          class="tag-option {{formData.tags.includes(item.name) ? 'selected' : ''}}"
+          style="background-color: {{item.color}}; color: #ffffff;"
+          bindtap="toggleTag"
+          data-tag="{{item.name}}"
+        >
+          {{item.name}}
+        </text>
+      </view>
+
+      <!-- 自定义标签 -->
+      <view wx:if="{{customTags.length > 0}}" class="tags-grid mt-24">
+        <text
+          wx:for="{{customTags}}"
+          wx:key="name"
+          class="tag-option {{formData.tags.includes(item.name) ? 'selected' : ''}}"
+          style="background-color: {{item.color}}; color: #ffffff;"
+          bindtap="toggleTag"
+          data-tag="{{item.name}}"
+        >
+          {{item.name}}
+        </text>
+      </view>
+
+      <view class="add-custom-tag" bindtap="showAddTagModal">+ 添加自定义标签</view>
+    </view>
+
+    <!-- 底部占位 -->
+    <view class="bottom-placeholder"></view>
+  </view>
+
+  <!-- 提交按钮 -->
+  <view
+    class="submit-btn {{!formData.name.trim() ? 'disabled' : ''}}"
+    bindtap="savePlaylist"
+  >
+    {{isEditing ? '保存修改' : '创建歌单'}}
+  </view>
+</view>
+
+<!-- 自定义标签输入弹窗 -->
+<view wx:if="{{showTagModal}}" class="tag-input-modal" bindtap="hideTagModal">
+  <view class="tag-input-content" catchtap="noop">
+    <view class="tag-input-title">添加自定义标签</view>
+
+    <view class="tag-input-row">
+      <input
+        class="tag-input"
+        placeholder="请输入标签名称"
+        value="{{newTagName}}"
+        bindinput="onNewTagNameInput"
+        maxlength="10"
+      />
+    </view>
+
+    <view class="tag-input-row">
+      <text class="form-label">选择颜色</text>
+      <view class="color-grid">
+        <view
+          wx:for="{{tagColors}}"
+          wx:key="index"
+          class="color-option {{selectedColor === item ? 'selected' : ''}} {{item === '#ffffff' ? 'white' : ''}}"
+          style="background-color: {{item}}; border: {{item === '#ffffff' ? '2rpx solid #C9CDD4' : 'none'}}"
+          bindtap="selectColor"
+          data-color="{{item}}"
+        />
+      </view>
+    </view>
+
+    <view class="tag-input-actions">
+      <view class="tag-input-btn cancel" bindtap="hideTagModal">取消</view>
+      <view class="tag-input-btn confirm" bindtap="addCustomTag">确定</view>
+    </view>
+  </view>
+</view>

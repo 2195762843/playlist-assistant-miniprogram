@@ -1,0 +1,151 @@
+<!-- 标签管理页 -->
+<view class="page">
+  <!-- 顶部区域 -->
+  <view class="header">
+    <view class="header-title">标签管理</view>
+    <view class="header-subtitle">管理和自定义你的歌曲标签</view>
+  </view>
+
+  <view class="tags-container">
+    <!-- 预设标签 -->
+    <view class="section">
+      <view class="section-title">
+        <text>预设标签</text>
+        <text class="section-count">共 {{presetTags.length}} 个</text>
+      </view>
+
+      <view
+        wx:for="{{presetTags}}"
+        wx:key="name"
+        class="preset-tag"
+      >
+        <view
+          class="preset-tag-color"
+          style="background-color: {{item.color}}"
+        />
+        <text class="preset-tag-name">{{item.name}}</text>
+        <text class="preset-hint">不可删除</text>
+      </view>
+    </view>
+
+    <!-- 自定义标签 -->
+    <view class="section">
+      <view class="section-title">
+        <text>自定义标签</text>
+        <text class="section-count">共 {{customTags.length}}/10 个</text>
+      </view>
+
+      <block wx:if="{{customTags.length > 0}}">
+        <view
+          wx:for="{{customTags}}"
+          wx:key="name"
+          class="tag-item"
+        >
+          <view class="tag-info">
+            <view
+              class="tag-color"
+              style="background-color: {{item.color}}"
+            />
+            <text class="tag-name">{{item.name}}</text>
+          </view>
+
+          <view class="tag-actions">
+            <view
+              class="tag-action-btn"
+              bindtap="editTag"
+              data-name="{{item.name}}"
+              data-color="{{item.color}}"
+            >
+              ✏️
+            </view>
+            <view
+              class="tag-action-btn delete"
+              bindtap="deleteTag"
+              data-name="{{item.name}}"
+            >
+              🗑️
+            </view>
+          </view>
+        </view>
+      </block>
+
+      <!-- 空状态 -->
+      <block wx:if="{{customTags.length === 0}}">
+        <view class="empty-state" style="padding: 80rpx 48rpx;">
+          <text style="font-size: 80rpx; display: block; margin-bottom: 16rpx;">🏷️</text>
+          <text style="font-size: 28rpx; color: #86909C; display: block;">还没有自定义标签</text>
+          <text style="font-size: 24rpx; color: #C9CDD4; display: block; margin-top: 8rpx;">点击下方按钮添加</text>
+        </view>
+      </block>
+
+      <!-- 添加自定义标签按钮 -->
+      <view
+        wx:if="{{customTags.length < 10}}"
+        class="add-btn"
+        bindtap="showAddModal"
+      >
+        + 添加自定义标签
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部统计 -->
+  <view class="bottom-stats">
+    <text class="stats-info">标签总数：{{totalTags}}</text>
+    <view class="stats-btn" bindtap="goBack">完成</view>
+  </view>
+</view>
+
+<!-- 添加/编辑标签弹窗 -->
+<view wx:if="{{showModal}}" class="modal" bindtap="hideModal">
+  <view class="modal-content" catchtap="noop">
+    <view class="modal-title">{{editingTag ? '编辑标签' : '添加标签'}}</view>
+
+    <view class="modal-row">
+      <text class="modal-label">标签名称</text>
+      <input
+        class="modal-input"
+        placeholder="请输入标签名称"
+        value="{{tagForm.name}}"
+        bindinput="onTagNameInput"
+        maxlength="10"
+      />
+    </view>
+
+    <view class="modal-row">
+      <text class="modal-label">选择颜色</text>
+      <view class="color-grid">
+        <view
+          wx:for="{{tagColors}}"
+          wx:key="index"
+          class="color-option {{tagForm.color === item ? 'selected' : ''}} {{item === '#ffffff' ? 'white' : ''}}"
+          style="background-color: {{item}}; border: {{item === '#ffffff' ? '2rpx solid #C9CDD4' : 'none'}}"
+          bindtap="selectColor"
+          data-color="{{item}}"
+        />
+      </view>
+    </view>
+
+    <view class="modal-actions">
+      <view
+        wx:if="{{editingTag}}"
+        class="modal-btn delete"
+        bindtap="confirmDelete"
+      >
+        删除
+      </view>
+      <view
+        class="modal-btn cancel"
+        bindtap="hideModal"
+      >
+        取消
+      </view>
+      <view
+        class="modal-btn confirm"
+        bindtap="saveTag"
+      >
+        确定
+      </view>
+    </view>
+  </view>
+</view>
