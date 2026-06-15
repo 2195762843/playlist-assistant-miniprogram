@@ -189,6 +189,12 @@
   margin-bottom: 8rpx;
 }
 
+.song-album {
+  font-size: 24rpx;
+  color: #A29BFE;
+  margin-bottom: 8rpx;
+}
+
 .song-mood {
   font-size: 24rpx;
   color: #4A90E2;

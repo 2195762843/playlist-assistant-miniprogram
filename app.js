@@ -8,12 +8,23 @@ App({
       songs: 'songs',
       tags: 'customTags',
       settings: 'appSettings'
+    },
+    // 云开发环境配置
+    cloudEnv: {
+      env: 'cloud1-d4g3brd02c9ce73a7' // 云开发环境ID
+    },
+    // 云数据库集合名
+    collections: {
+      songlist: 'songlist',
+      playlists: 'playlists'
     }
   },
 
   onLaunch() {
     // 初始化本地存储
     this.initStorage();
+    // 初始化云开发
+    this.initCloud();
   },
 
   // 初始化本地存储数据结构
@@ -25,7 +36,7 @@ App({
       wx.setStorageSync(storageKeys.playlists, []);
     }
 
-    // 初始化歌曲列表
+    // 初始化歌曲列表（本地缓存）
     if (!wx.getStorageSync(storageKeys.songs)) {
       wx.setStorageSync(storageKeys.songs, []);
     }
@@ -42,5 +53,30 @@ App({
         sortOrder: 'desc'     // asc | desc
       });
     }
+  },
+
+  // 初始化云开发
+  initCloud() {
+    if (!wx.cloud) {
+      console.error('请使用 2.2.3 或以上的基础库以使用云能力');
+    } else {
+      wx.cloud.init({
+        env: this.globalData.cloudEnv.env,
+        traceUser: true,
+      });
+    }
+  },
+
+  // 获取云数据库实例
+  getCloudDB() {
+    return wx.cloud.database();
+  },
+
+  // 调用云函数
+  callCloudFunction(name, data) {
+    return wx.cloud.callFunction({
+      name: name,
+      data: data
+    });
   }
 });

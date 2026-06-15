@@ -1,5 +1,5 @@
 // 歌单详情页
-const { PlaylistStorage, SongStorage, TagStorage } = require('../../utils/storage');
+const { PlaylistStorage, TagStorage } = require('../../utils/storage');
 
 Page({
   data: {
@@ -14,9 +14,11 @@ Page({
     songForm: {
       name: '',
       artist: '',
+      album: '',
       mood: '',
       tags: []
-    }
+    },
+    isLoading: false
   },
 
   onLoad(options) {
@@ -43,7 +45,7 @@ Page({
   loadData() {
     const { playlistId } = this.data;
 
-    // 加载歌单信息
+    // 加载歌单信息（本地存储）
     const playlist = PlaylistStorage.getById(playlistId);
     if (!playlist) {
       wx.showToast({
@@ -56,11 +58,7 @@ Page({
       return;
     }
 
-    // 加载歌曲列表
-    const songs = SongStorage.getByPlaylistId(playlistId);
-    const displayedSongs = this.formatSongsForDisplay(songs);
-
-    // 加载标签
+    // 加载标签（本地存储）
     const allTags = TagStorage.getAll();
 
     this.setData({
@@ -68,9 +66,42 @@ Page({
         ...playlist,
         createTimeFormat: this.formatDate(playlist.createTime)
       },
-      songs,
-      displayedSongs,
       allTags
+    });
+
+    // 从云数据库加载歌曲列表
+    this.loadSongsFromCloud(playlistId);
+  },
+
+  // 从云数据库加载歌曲列表
+  loadSongsFromCloud(playlistId) {
+    this.setData({ isLoading: true });
+
+    wx.cloud.callFunction({
+      name: 'getSongs',
+      data: { playlistId: playlistId }
+    }).then(res => {
+      this.setData({ isLoading: false });
+      if (res.result.success) {
+        const songs = res.result.data;
+        const displayedSongs = this.formatSongsForDisplay(songs);
+        this.setData({
+          songs,
+          displayedSongs
+        });
+      } else {
+        wx.showToast({
+          title: res.result.message || '加载失败',
+          icon: 'none'
+        });
+      }
+    }).catch(err => {
+      this.setData({ isLoading: false });
+      console.error('加载歌曲失败', err);
+      wx.showToast({
+        title: '网络错误',
+        icon: 'none'
+      });
     });
   },
 
@@ -151,6 +182,7 @@ Page({
       songForm: {
         name: '',
         artist: '',
+        album: '',
         mood: '',
         tags: []
       }
@@ -160,7 +192,8 @@ Page({
   // 编辑歌曲
   editSong(e) {
     const id = e.currentTarget.dataset.id;
-    const song = SongStorage.getById(id);
+    // 从当前显示的歌曲列表中找到歌曲
+    const song = this.data.songs.find(s => s._id === id || s.id === id);
 
     if (song) {
       this.setData({
@@ -169,6 +202,7 @@ Page({
         songForm: {
           name: song.name,
           artist: song.artist || '',
+          album: song.album || '',
           mood: song.mood || '',
           tags: song.tags || []
         }
@@ -184,6 +218,7 @@ Page({
       songForm: {
         name: '',
         artist: '',
+        album: '',
         mood: '',
         tags: []
       }
@@ -201,6 +236,13 @@ Page({
   onSongArtistInput(e) {
     this.setData({
       'songForm.artist': e.detail.value
+    });
+  },
+
+  // 专辑输入
+  onSongAlbumInput(e) {
+    this.setData({
+      'songForm.album': e.detail.value
     });
   },
 
@@ -226,7 +268,7 @@ Page({
     this.setData({ songForm });
   },
 
-  // 保存歌曲
+  // 保存歌曲（新增到云数据库）
   saveSong() {
     const { songForm, editingSong, playlistId } = this.data;
 
@@ -239,29 +281,93 @@ Page({
       return;
     }
 
-    // 保存歌曲
+    wx.showLoading({ title: '保存中...' });
+
+    // 准备歌曲数据
     const songData = {
-      ...songForm,
-      playlistId
+      name: songForm.name.trim(),
+      artist: songForm.artist.trim(),
+      album: songForm.album.trim(),
+      mood: songForm.mood.trim(),
+      tags: songForm.tags,
+      playlistId: playlistId
     };
 
+    // 如果是编辑模式，调用更新；如果是新增模式，调用云函数添加
     if (editingSong) {
-      songData.id = editingSong.id;
+      // 编辑模式：先删除旧记录，再添加新记录（简化处理）
+      this.updateSongInCloud(editingSong, songData);
+    } else {
+      // 新增模式：调用 addSong 云函数
+      this.addSongToCloud(songData);
+    }
+  },
+
+  // 添加歌曲到云数据库
+  addSongToCloud(songData) {
+    wx.cloud.callFunction({
+      name: 'addSong',
+      data: { songData: songData }
+    }).then(res => {
+      wx.hideLoading();
+      if (res.result.success) {
+        wx.showToast({
+          title: '添加成功',
+          icon: 'success'
+        });
+        this.hideSongModal();
+        // 重新加载歌曲列表
+        setTimeout(() => {
+          this.loadSongsFromCloud(this.data.playlistId);
+        }, 1000);
+      } else {
+        wx.showToast({
+          title: res.result.message || '添加失败',
+          icon: 'none'
+        });
+      }
+    }).catch(err => {
+      wx.hideLoading();
+      console.error('添加歌曲失败', err);
+      wx.showToast({
+        title: '网络错误',
+        icon: 'none'
+      });
+    });
+  },
+
+  // 更新云数据库中的歌曲
+  updateSongInCloud(oldSong, newSongData) {
+    const songId = oldSong._id || oldSong.id;
+    if (!songId) {
+      wx.hideLoading();
+      wx.showToast({ title: '歌曲ID不存在', icon: 'none' });
+      return;
     }
 
-    SongStorage.save(songData);
-
-    wx.showToast({
-      title: editingSong ? '修改成功' : '添加成功',
-      icon: 'success'
+    // 先删除旧记录
+    wx.cloud.callFunction({
+      name: 'deleteSong',
+      data: { songId: songId }
+    }).then(res => {
+      if (res.result.success) {
+        // 删除成功后添加新记录
+        this.addSongToCloud(newSongData);
+      } else {
+        wx.hideLoading();
+        wx.showToast({
+          title: '修改失败',
+          icon: 'none'
+        });
+      }
+    }).catch(err => {
+      wx.hideLoading();
+      console.error('修改歌曲失败', err);
+      wx.showToast({
+        title: '网络错误',
+        icon: 'none'
+      });
     });
-
-    this.hideSongModal();
-
-    // 重新加载数据
-    setTimeout(() => {
-      this.loadData();
-    }, 1000);
   },
 
   // 删除歌曲确认
@@ -275,17 +381,50 @@ Page({
       confirmColor: '#FF6B6B',
       success: (res) => {
         if (res.confirm) {
-          SongStorage.delete(editingSong.id);
-          wx.showToast({
-            title: '删除成功',
-            icon: 'success'
-          });
-          this.hideSongModal();
-          setTimeout(() => {
-            this.loadData();
-          }, 1000);
+          this.deleteSongFromCloud(editingSong);
         }
       }
+    });
+  },
+
+  // 从云数据库删除歌曲
+  deleteSongFromCloud(song) {
+    const songId = song._id || song.id;
+    if (!songId) {
+      wx.showToast({ title: '歌曲ID不存在', icon: 'none' });
+      return;
+    }
+
+    wx.showLoading({ title: '删除中...' });
+
+    wx.cloud.callFunction({
+      name: 'deleteSong',
+      data: { songId: songId }
+    }).then(res => {
+      wx.hideLoading();
+      if (res.result.success) {
+        wx.showToast({
+          title: '删除成功',
+          icon: 'success'
+        });
+        this.hideSongModal();
+        // 重新加载歌曲列表
+        setTimeout(() => {
+          this.loadSongsFromCloud(this.data.playlistId);
+        }, 1000);
+      } else {
+        wx.showToast({
+          title: res.result.message || '删除失败',
+          icon: 'none'
+        });
+      }
+    }).catch(err => {
+      wx.hideLoading();
+      console.error('删除歌曲失败', err);
+      wx.showToast({
+        title: '网络错误',
+        icon: 'none'
+      });
     });
   },
 
@@ -299,26 +438,37 @@ Page({
       confirmColor: '#FF6B6B',
       success: (res) => {
         if (res.confirm) {
-          SongStorage.delete(id);
-          wx.showToast({
-            title: '删除成功',
-            icon: 'success'
-          });
-          setTimeout(() => {
-            this.loadData();
-          }, 1000);
+          // 找到对应的歌曲对象
+          const song = this.data.songs.find(s => (s._id === id || s.id === id));
+          if (song) {
+            this.deleteSongFromCloud(song);
+          }
         }
       }
     });
   },
 
-  // 切换收藏状态
+  // 切换收藏状态（更新到云数据库）
   toggleFavorite(e) {
     const id = e.currentTarget.dataset.id;
-    SongStorage.toggleFavorite(id);
+    const song = this.data.songs.find(s => (s._id === id || s.id === id));
 
-    // 重新加载数据
-    this.loadData();
+    if (song) {
+      song.isFavorite = !song.isFavorite;
+
+      // 调用云函数更新收藏状态
+      wx.cloud.callFunction({
+        name: 'addSong',
+        data: { songData: song }
+      }).then(res => {
+        if (res.result.success) {
+          // 重新加载歌曲列表
+          this.loadSongsFromCloud(this.data.playlistId);
+        }
+      }).catch(err => {
+        console.error('更新收藏状态失败', err);
+      });
+    }
   },
 
   // 阻止事件冒泡

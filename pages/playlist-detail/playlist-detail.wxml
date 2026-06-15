@@ -59,7 +59,7 @@
     <block wx:if="{{displayedSongs.length > 0}}">
       <view
         wx:for="{{displayedSongs}}"
-        wx:key="id"
+        wx:key="_id"
         class="song-card"
       >
         <view class="song-info">
@@ -69,6 +69,9 @@
           </view>
           <view wx:if="{{item.artist}}" class="song-artist">
             {{item.artist}}
+          </view>
+          <view wx:if="{{item.album}}" class="song-album">
+            {{item.album}}
           </view>
           <view wx:if="{{item.mood}}" class="song-mood">
             {{item.mood}}
@@ -90,21 +93,21 @@
           <view
             class="song-action-btn"
             bindtap="toggleFavorite"
-            data-id="{{item.id}}"
+            data-id="{{item._id}}"
           >
             {{item.isFavorite ? '❤️' : '🤍'}}
           </view>
           <view
             class="song-action-btn"
             bindtap="editSong"
-            data-id="{{item.id}}"
+            data-id="{{item._id}}"
           >
             ✏️
           </view>
           <view
             class="song-action-btn"
             bindtap="deleteSong"
-            data-id="{{item.id}}"
+            data-id="{{item._id}}"
             data-name="{{item.name}}"
           >
             🗑️
@@ -157,6 +160,16 @@
           placeholder="请输入歌手名称"
           value="{{songForm.artist}}"
           bindinput="onSongArtistInput"
+        />
+      </view>
+
+      <view class="input-row">
+        <text class="input-label">所属专辑</text>
+        <input
+          class="input"
+          placeholder="请输入专辑名称"
+          value="{{songForm.album}}"
+          bindinput="onSongAlbumInput"
         />
       </view>
 
