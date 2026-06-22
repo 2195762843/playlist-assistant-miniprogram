@@ -8,6 +8,19 @@
         <text>基本信息</text>
       </view>
 
+      <!-- 封面图片 -->
+      <view class="form-item">
+        <text class="form-label">歌单封面</text>
+        <view class="cover-upload">
+          <image wx:if="{{formData.coverUrl}}" class="cover-preview" src="{{formData.coverUrl}}" mode="aspectFill" />
+          <view wx:else class="cover-placeholder" bindtap="chooseCover">
+            <text class="cover-icon">🖼️</text>
+            <text class="cover-text">点击上传封面</text>
+          </view>
+          <view wx:if="{{formData.coverUrl}}" class="cover-remove" bindtap="removeCover">✕</view>
+        </view>
+      </view>
+
       <view class="form-item">
         <text class="form-label required">歌单名称</text>
         <input

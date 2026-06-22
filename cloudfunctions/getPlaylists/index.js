@@ -7,22 +7,24 @@ cloud.init({
 const db = cloud.database();
 
 exports.main = async (event, context) => {
-  const { playlistId } = event;
+  const { keyword } = event;
   const { OPENID } = cloud.getWXContext();
-  
+
   try {
-    let query = db.collection('songlist').where({
+    let query = db.collection('playlists').where({
       openId: OPENID
     });
-    
-    if (playlistId) {
-      query = query.where({
-        playlistId: playlistId
-      });
+
+    if (keyword && keyword.trim()) {
+      const lowerKeyword = keyword.toLowerCase();
+      query = query.where(db.command.or([
+        { name: db.RegExp({ regexp: lowerKeyword, options: 'i' }) },
+        { description: db.RegExp({ regexp: lowerKeyword, options: 'i' }) }
+      ]));
     }
-    
-    const result = await query.orderBy('createTime', 'desc').get();
-    
+
+    const result = await query.orderBy('isPinned', 'desc').orderBy('createTime', 'desc').get();
+
     return {
       success: true,
       message: '获取成功',

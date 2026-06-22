@@ -1,4 +1,3 @@
-// 首页 - 歌单列表
 const { PlaylistStorage } = require('../../utils/storage');
 
 Page({
@@ -6,146 +5,177 @@ Page({
     playlists: [],
     displayedPlaylists: [],
     searchKeyword: '',
-    isSearching: false
+    isSearching: false,
+    isLoading: false,
+    userInfo: null
   },
 
   onLoad() {
-    // 页面加载时获取数据
+    this.loadUserInfo();
   },
 
   onShow() {
-    // 每次显示页面时刷新数据
+    this.loadUserInfo();
     this.loadPlaylists();
   },
 
+  loadUserInfo() {
+    var app = getApp();
+    var userInfo = app.globalData.userInfo;
+    this.setData({ userInfo: userInfo });
+  },
+
+  handleUserTap() {
+    var that = this;
+    var userInfo = this.data.userInfo;
+    if (!userInfo) {
+      var app = getApp();
+      app.login().then(function(result) {
+        if (result.success) {
+          that.setData({ userInfo: result.data });
+          wx.showToast({
+            title: '登录成功',
+            icon: 'success'
+          });
+        } else {
+          wx.showToast({
+            title: result.message,
+            icon: 'none'
+          });
+        }
+      });
+    }
+  },
+
   onPullDownRefresh() {
-    // 下拉刷新
     this.loadPlaylists();
     wx.stopPullDownRefresh();
   },
 
-  // 加载歌单列表
   loadPlaylists() {
-    const playlists = PlaylistStorage.getAll();
-    const displayedPlaylists = this.formatPlaylistsForDisplay(playlists);
-
-    this.setData({
-      playlists,
-      displayedPlaylists,
-      isSearching: false,
-      searchKeyword: ''
+    var that = this;
+    this.setData({ isLoading: true });
+    PlaylistStorage.getAll(function(err, playlists) {
+      var displayedPlaylists = that.formatPlaylistsForDisplay(playlists);
+      that.setData({
+        playlists: playlists,
+        displayedPlaylists: displayedPlaylists,
+        isSearching: false,
+        searchKeyword: '',
+        isLoading: false
+      });
     });
   },
 
-  // 格式化歌单数据用于显示
   formatPlaylistsForDisplay(playlists) {
-    return playlists.map(playlist => ({
-      ...playlist,
-      createTimeFormat: this.formatDate(playlist.createTime)
-    }));
+    var that = this;
+    return playlists.map(function(playlist) {
+      return {
+        ...playlist,
+        createTimeFormat: that.formatDate(playlist.createTime)
+      };
+    });
   },
 
-  // 格式化日期
   formatDate(timestamp) {
     if (!timestamp) return '';
-    const date = new Date(timestamp);
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    return `${month}月${day}日`;
+    var date = new Date(timestamp);
+    var month = date.getMonth() + 1;
+    var day = date.getDate();
+    return month + '月' + day + '日';
   },
 
-  // 搜索输入
   onSearchInput(e) {
     this.setData({
       searchKeyword: e.detail.value
     });
   },
 
-  // 执行搜索
   onSearch(e) {
-    const keyword = e.detail.value || this.data.searchKeyword;
-    let results;
-
+    var that = this;
+    var keyword = e.detail.value || this.data.searchKeyword;
     if (keyword.trim()) {
-      results = PlaylistStorage.search(keyword);
-      this.setData({
-        isSearching: true
+      PlaylistStorage.search(keyword, function(err, results) {
+        that.setData({
+          displayedPlaylists: that.formatPlaylistsForDisplay(results),
+          isSearching: true
+        });
       });
     } else {
-      results = PlaylistStorage.getAll();
-      this.setData({
-        isSearching: false
-      });
+      this.loadPlaylists();
     }
-
-    this.setData({
-      displayedPlaylists: this.formatPlaylistsForDisplay(results)
-    });
   },
 
-  // 跳转到歌单详情
   goToPlaylistDetail(e) {
-    const id = e.currentTarget.dataset.id;
+    var id = e.currentTarget.dataset.id;
     wx.navigateTo({
-      url: `/pages/playlist-detail/playlist-detail?id=${id}`
+      url: '/pages/playlist-detail/playlist-detail?id=' + id
     });
   },
 
-  // 跳转到新增歌单
   goToAddPlaylist() {
     wx.navigateTo({
       url: '/pages/playlist-edit/playlist-edit'
     });
   },
 
-  // 编辑歌单
   editPlaylist(e) {
-    const id = e.currentTarget.dataset.id;
+    var id = e.currentTarget.dataset.id;
     wx.navigateTo({
-      url: `/pages/playlist-edit/playlist-edit?id=${id}`
+      url: '/pages/playlist-edit/playlist-edit?id=' + id
     });
   },
 
-  // 删除歌单
   deletePlaylist(e) {
-    const { id, name } = e.currentTarget.dataset;
-
+    var that = this;
+    var id = e.currentTarget.dataset.id;
+    var name = e.currentTarget.dataset.name;
     wx.showModal({
       title: '确认删除',
-      content: `确定要删除歌单"${name}"吗？该歌单下的所有歌曲也将被删除。`,
+      content: '确定要删除歌单"' + name + '"吗？该歌单下的所有歌曲也将被删除。',
       confirmColor: '#FF6B6B',
-      success: (res) => {
+      success: function(res) {
         if (res.confirm) {
-          PlaylistStorage.delete(id);
-          wx.showToast({
-            title: '删除成功',
-            icon: 'success'
+          PlaylistStorage.delete(id, function(err, success) {
+            wx.showToast({
+              title: '删除成功',
+              icon: 'success'
+            });
+            setTimeout(function() {
+              that.loadPlaylists();
+            }, 1000);
           });
-          // 重新加载列表
-          setTimeout(() => {
-            this.loadPlaylists();
-          }, 1000);
         }
       }
     });
   },
 
-  // 切换置顶状态
   togglePin(e) {
-    const id = e.currentTarget.dataset.id;
-    const isPinned = PlaylistStorage.togglePin(id);
-
-    wx.showToast({
-      title: isPinned ? '已置顶' : '已取消置顶',
-      icon: 'success'
+    var that = this;
+    var id = e.currentTarget.dataset.id;
+    PlaylistStorage.togglePin(id, function(err, isPinned) {
+      wx.showToast({
+        title: isPinned ? '已置顶' : '已取消置顶',
+        icon: 'success'
+      });
+      that.loadPlaylists();
     });
-
-    // 重新加载列表
-    this.loadPlaylists();
   },
 
-  // 阻止事件冒泡
-  noop() {
-    // 空函数，用于阻止事件冒泡
-  }
+  onShareAppMessage() {
+    return {
+      title: '私人歌单整理',
+      path: '/pages/index/index',
+      imageUrl: ''
+    };
+  },
+
+  onShareTimeline() {
+    return {
+      title: '私人歌单整理',
+      imageUrl: ''
+    };
+  },
+
+  noop() {}
 });

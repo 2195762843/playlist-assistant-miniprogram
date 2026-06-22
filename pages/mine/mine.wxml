@@ -2,9 +2,12 @@
 <view class="page">
   <!-- 头部区域 -->
   <view class="header">
-    <view class="avatar">🎵</view>
-    <view class="header-title">私人歌单整理助手</view>
-    <view class="header-subtitle">记录你的音乐心情</view>
+    <image wx:if="{{userInfo && userInfo.avatarUrl}}" class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill" />
+    <view wx:else class="avatar">🎵</view>
+    <view class="user-info">
+      <view class="header-title">{{userInfo ? userInfo.nickName : '私人歌单整理助手'}}</view>
+      <view class="header-subtitle">{{userInfo ? '已登录' : '记录你的音乐心情'}}</view>
+    </view>
   </view>
 
   <!-- 统计数据 -->
@@ -57,6 +60,15 @@
         </view>
         <text class="function-arrow">›</text>
       </view>
+
+      <view wx:if="{{userInfo}}" class="function-item logout" bindtap="logout">
+        <text class="function-icon">🚪</text>
+        <view class="function-info">
+          <view class="function-name">退出登录</view>
+          <view class="function-desc">退出当前账号</view>
+        </view>
+        <text class="function-arrow">›</text>
+      </view>
     </view>
   </view>
 
@@ -82,4 +94,7 @@
     <text>© 2024 私人歌单整理助手</text>
     <text style="display: block; margin-top: 8rpx;">仅作为本地数据记录工具使用</text>
   </view>
+
+  <!-- 底部导航栏 -->
+  <tabbar current-path="/pages/mine/mine" />
 </view>

@@ -1,61 +1,59 @@
 App({
   globalData: {
-    // 全局主题色
     themeColor: '#4A90E2',
-    // 存储键名
     storageKeys: {
       playlists: 'playlists',
       songs: 'songs',
       tags: 'customTags',
-      settings: 'appSettings'
+      settings: 'appSettings',
+      userInfo: 'userInfo'
     },
-    // 云开发环境配置
     cloudEnv: {
-      env: 'cloud1-d4g3brd02c9ce73a7' // 云开发环境ID
+      env: 'cloud1-d4g3brd02c9ce73a7'
     },
-    // 云数据库集合名
     collections: {
       songlist: 'songlist',
-      playlists: 'playlists'
-    }
+      playlists: 'playlists',
+      customTags: 'customTags',
+      users: 'users'
+    },
+    userInfo: null
   },
 
   onLaunch() {
-    // 初始化本地存储
     this.initStorage();
-    // 初始化云开发
     this.initCloud();
+    this.checkLogin();
   },
 
-  // 初始化本地存储数据结构
   initStorage() {
     const storageKeys = this.globalData.storageKeys;
 
-    // 初始化歌单列表
     if (!wx.getStorageSync(storageKeys.playlists)) {
       wx.setStorageSync(storageKeys.playlists, []);
     }
 
-    // 初始化歌曲列表（本地缓存）
     if (!wx.getStorageSync(storageKeys.songs)) {
       wx.setStorageSync(storageKeys.songs, []);
     }
 
-    // 初始化自定义标签
     if (!wx.getStorageSync(storageKeys.tags)) {
       wx.setStorageSync(storageKeys.tags, []);
     }
 
-    // 初始化设置
     if (!wx.getStorageSync(storageKeys.settings)) {
       wx.setStorageSync(storageKeys.settings, {
-        sortBy: 'createTime', // createTime | name | songCount
-        sortOrder: 'desc'     // asc | desc
+        sortBy: 'createTime',
+        sortOrder: 'desc'
       });
+    }
+
+    const savedUserInfo = wx.getStorageSync(storageKeys.userInfo);
+    if (savedUserInfo) {
+      this.globalData.userInfo = savedUserInfo;
     }
   },
 
-  // 初始化云开发
   initCloud() {
     if (!wx.cloud) {
       console.error('请使用 2.2.3 或以上的基础库以使用云能力');
@@ -67,16 +65,70 @@ App({
     }
   },
 
-  // 获取云数据库实例
   getCloudDB() {
     return wx.cloud.database();
   },
 
-  // 调用云函数
   callCloudFunction(name, data) {
     return wx.cloud.callFunction({
       name: name,
       data: data
     });
+  },
+
+  checkLogin() {
+    const savedUserInfo = wx.getStorageSync(this.globalData.storageKeys.userInfo);
+    if (savedUserInfo) {
+      this.globalData.userInfo = savedUserInfo;
+    }
+  },
+
+  async login() {
+    return new Promise((resolve) => {
+      wx.getUserProfile({
+        desc: '用于获取您的昵称和头像',
+        success: async (res) => {
+          const userInfo = res.userInfo;
+          this.globalData.userInfo = userInfo;
+          wx.setStorageSync(this.globalData.storageKeys.userInfo, userInfo);
+
+          const cloudRes = await wx.cloud.callFunction({
+            name: 'updateUserInfo',
+            data: {
+              nickName: userInfo.nickName,
+              avatarUrl: userInfo.avatarUrl,
+              gender: userInfo.gender
+            }
+          });
+
+          if (cloudRes.result.success) {
+            resolve({ success: true, data: userInfo });
+          } else {
+            resolve({ success: false, message: cloudRes.result.message });
+          }
+        },
+        fail: (err) => {
+          console.error('获取用户信息失败', err);
+          resolve({ success: false, message: '获取用户信息失败' });
+        }
+      });
+    });
+  },
+
+  async getUserInfoFromCloud() {
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'getUserInfo'
+      });
+      if (res.result.success) {
+        this.globalData.userInfo = res.result.data;
+        wx.setStorageSync(this.globalData.storageKeys.userInfo, res.result.data);
+        return res.result.data;
+      }
+      return null;
+    } catch (err) {
+      console.error('从云端获取用户信息失败', err);
+      return null;
+    }
   }
 });

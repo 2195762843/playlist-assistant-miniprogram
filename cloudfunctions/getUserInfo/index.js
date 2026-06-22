@@ -7,27 +7,26 @@ cloud.init({
 const db = cloud.database();
 
 exports.main = async (event, context) => {
-  const { playlistId } = event;
   const { OPENID } = cloud.getWXContext();
-  
+
   try {
-    let query = db.collection('songlist').where({
+    const result = await db.collection('users').where({
       openId: OPENID
-    });
-    
-    if (playlistId) {
-      query = query.where({
-        playlistId: playlistId
-      });
+    }).get();
+
+    if (result.data.length > 0) {
+      return {
+        success: true,
+        message: '获取成功',
+        data: result.data[0]
+      };
+    } else {
+      return {
+        success: false,
+        message: '用户不存在',
+        data: null
+      };
     }
-    
-    const result = await query.orderBy('createTime', 'desc').get();
-    
-    return {
-      success: true,
-      message: '获取成功',
-      data: result.data
-    };
   } catch (err) {
     return {
       success: false,

@@ -7,22 +7,13 @@ cloud.init({
 const db = cloud.database();
 
 exports.main = async (event, context) => {
-  const { playlistId } = event;
   const { OPENID } = cloud.getWXContext();
-  
+
   try {
-    let query = db.collection('songlist').where({
+    const result = await db.collection('customTags').where({
       openId: OPENID
-    });
-    
-    if (playlistId) {
-      query = query.where({
-        playlistId: playlistId
-      });
-    }
-    
-    const result = await query.orderBy('createTime', 'desc').get();
-    
+    }).orderBy('createTime', 'desc').get();
+
     return {
       success: true,
       message: '获取成功',

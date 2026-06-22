@@ -107,6 +107,10 @@
   border-bottom: none;
 }
 
+.function-item.logout .function-name {
+  color: #FF6B6B;
+}
+
 .function-icon {
   font-size: 40rpx;
   margin-right: 20rpx;

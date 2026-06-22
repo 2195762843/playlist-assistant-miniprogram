@@ -6,21 +6,20 @@ cloud.init({
 
 const db = cloud.database();
 
-// 添加歌曲云函数
 exports.main = async (event, context) => {
   const { songData } = event;
+  const { OPENID } = cloud.getWXContext();
   
   try {
-    // 添加创建时间和更新时间
     const now = Date.now();
     const dataToAdd = {
       ...songData,
       createTime: now,
       updateTime: now,
-      isFavorite: false
+      isFavorite: false,
+      openId: OPENID
     };
     
-    // 插入到云数据库 songlist 集合
     const result = await db.collection('songlist').add({
       data: dataToAdd
     });

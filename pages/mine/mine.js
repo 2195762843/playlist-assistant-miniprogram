@@ -1,5 +1,4 @@
-// 我的页面
-const { Stats, PlaylistStorage, SongStorage, TagStorage } = require('../../utils/storage');
+const { Stats } = require('../../utils/storage');
 
 Page({
   data: {
@@ -9,16 +8,18 @@ Page({
       pinnedPlaylists: 0,
       favoriteSongs: 0,
       tagsCount: 0
-    }
+    },
+    userInfo: null
   },
 
   onLoad() {
     this.loadStats();
+    this.loadUserInfo();
   },
 
   onShow() {
-    // 每次显示页面时刷新统计数据
     this.loadStats();
+    this.loadUserInfo();
   },
 
   onPullDownRefresh() {
@@ -26,43 +27,63 @@ Page({
     wx.stopPullDownRefresh();
   },
 
-  // 加载统计数据
   loadStats() {
-    const stats = Stats.get();
-    this.setData({ stats });
+    var that = this;
+    Stats.get(function(err, stats) {
+      that.setData({ stats: stats });
+    });
   },
 
-  // 跳转到标签管理
+  loadUserInfo() {
+    var app = getApp();
+    this.setData({ userInfo: app.globalData.userInfo });
+  },
+
   goToTags() {
     wx.navigateTo({
       url: '/pages/tags/tags'
     });
   },
 
-  // 清空所有数据
   clearAllData() {
+    var that = this;
     wx.showModal({
       title: '确认清空',
       content: '确定要清空所有数据吗？此操作不可恢复！',
       confirmColor: '#FF6B6B',
-      success: (res) => {
+      success: function(res) {
         if (res.confirm) {
-          // 清空所有存储
           wx.clearStorageSync();
-
-          // 重新初始化存储
-          const app = getApp();
+          var app = getApp();
           app.initStorage();
-
           wx.showToast({
             title: '数据已清空',
             icon: 'success'
           });
-
-          // 重新加载统计
-          setTimeout(() => {
-            this.loadStats();
+          setTimeout(function() {
+            that.loadStats();
           }, 1000);
+        }
+      }
+    });
+  },
+
+  logout() {
+    var that = this;
+    wx.showModal({
+      title: '退出登录',
+      content: '确定要退出登录吗？退出后将不再显示您的个人信息。',
+      confirmColor: '#FF6B6B',
+      success: function(res) {
+        if (res.confirm) {
+          var app = getApp();
+          app.globalData.userInfo = null;
+          wx.removeStorageSync('userInfo');
+          that.setData({ userInfo: null });
+          wx.showToast({
+            title: '已退出登录',
+            icon: 'success'
+          });
         }
       }
     });

@@ -4,8 +4,8 @@
   "description": "私人歌单整理助手",
   "appid": "wx5f1e9768820f3f66",
   "setting": {
-    "urlCheck": true,
-    "es6": false,
+    "urlCheck": false,
+    "es6": true,
     "enhance": false,
     "compileHotReLoad": false,
     "postcss": false,
@@ -45,5 +45,5 @@
     "include": []
   },
   "editorSetting": {},
-  "cloudfunctionRoot": "cloudfunctions"
+  "cloudfunctionRoot": "cloudfunctions/"
 }

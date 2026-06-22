@@ -1,4 +1,7 @@
 {
   "navigationBarTitleText": "歌单整理",
-  "enablePullDownRefresh": true
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "tabbar": "../../components/tabbar/tabbar"
+  }
 }

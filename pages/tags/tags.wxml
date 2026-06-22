@@ -94,6 +94,9 @@
     <text class="stats-info">标签总数：{{totalTags}}</text>
     <view class="stats-btn" bindtap="goBack">完成</view>
   </view>
+
+  <!-- 底部导航栏 -->
+  <tabbar current-path="/pages/tags/tags" />
 </view>
 
 <!-- 添加/编辑标签弹窗 -->

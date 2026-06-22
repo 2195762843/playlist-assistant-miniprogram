@@ -5,6 +5,51 @@
   padding-bottom: 120rpx;
 }
 
+/* 用户信息区域 */
+.user-section {
+  background-color: #ffffff;
+  padding: 24rpx 32rpx;
+  margin-bottom: 16rpx;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.avatar {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  margin-right: 20rpx;
+}
+
+.avatar.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #F5F7FA;
+  font-size: 40rpx;
+}
+
+.user-details {
+  flex: 1;
+}
+
+.user-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1D2129;
+  display: block;
+}
+
+.user-hint {
+  font-size: 24rpx;
+  color: #86909C;
+  margin-top: 8rpx;
+  display: block;
+}
+
 /* 顶部区域 */
 .header {
   background: linear-gradient(135deg, #4A90E2 0%, #67B1E7 100%);
@@ -77,17 +122,45 @@
 
 .playlist-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   margin-bottom: 16rpx;
+}
+
+.playlist-cover {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.playlist-cover.placeholder {
+  background: linear-gradient(135deg, #4A90E2 0%, #67B1E7 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  color: #ffffff;
+}
+
+.playlist-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .playlist-name {
   font-size: 32rpx;
   font-weight: 600;
   color: #1D2129;
-  flex: 1;
-  margin-right: 16rpx;
+  display: flex;
+  align-items: center;
+}
+
+.playlist-song-count {
+  font-size: 24rpx;
+  color: #86909C;
+  margin-top: 8rpx;
 }
 
 .playlist-name text {
@@ -218,4 +291,45 @@
 
 .fab-button:active {
   transform: scale(0.95);
+}
+
+/* 加载遮罩 */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 6rpx solid #F5F7FA;
+  border-top-color: #4A90E2;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  margin-top: 20rpx;
+  font-size: 28rpx;
+  color: #86909C;
 }

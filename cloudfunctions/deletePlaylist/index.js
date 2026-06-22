@@ -9,29 +9,29 @@ const db = cloud.database();
 exports.main = async (event, context) => {
   const { playlistId } = event;
   const { OPENID } = cloud.getWXContext();
-  
+
+  if (!playlistId) {
+    return {
+      success: false,
+      message: '歌单ID不能为空'
+    };
+  }
+
   try {
-    let query = db.collection('songlist').where({
-      openId: OPENID
-    });
-    
-    if (playlistId) {
-      query = query.where({
-        playlistId: playlistId
-      });
-    }
-    
-    const result = await query.orderBy('createTime', 'desc').get();
-    
+    await db.collection('playlists').doc(playlistId).remove();
+
+    await db.collection('songlist').where({
+      playlistId: playlistId
+    }).remove();
+
     return {
       success: true,
-      message: '获取成功',
-      data: result.data
+      message: '删除成功'
     };
   } catch (err) {
     return {
       success: false,
-      message: '获取失败',
+      message: '删除失败',
       error: err.message
     };
   }
